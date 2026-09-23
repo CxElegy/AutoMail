@@ -1,0 +1,6 @@
+# 個人の設定値・生成物はコミットしない
+config/*.local.md
+*.local.*
+*.ics
+exports/
+.DS_Store
