@@ -3,7 +3,7 @@
 Routine「期限と受け取りボード」に設定している prompt の雛形です。
 `{{...}}` の部分は実際の値に置き換えて Routine 側に設定してください（このリポジトリには実際の値を書かない）。
 
-- 起動：毎日 6:00／10:00／12:00／15:00／18:00／20:00／22:00／0:00 JST（全て00分）
+- 起動：毎日 8:51／20:51 JST（2026-09-27、8回から2回に変更）
 - 必要なコネクタ：Gmail / Google Drive / Google Calendar / Claude_Code_Remote
 - **prompt を書き換えたら、[`docs/update-procedure.md`](../docs/update-procedure.md) の「軽量運転」節も同じ内容に直すこと。**
 
