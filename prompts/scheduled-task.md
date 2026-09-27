@@ -5,7 +5,7 @@ Routine「期限と受け取りボード」に設定している prompt の雛�
 
 - 起動：毎日 6:00／10:00／12:00／15:00／18:00／20:00／22:00／0:00 JST（全て00分）
 - 必要なコネクタ：Gmail / Google Drive / Google Calendar / Claude_Code_Remote
-- **prompt を書き換えたら、[`docs/update-procedure.md`](../docs/update-procedure.md) の「軽量運転」節も同じ内容に直すこと。**
+- 軽量運転のルールの正本はこのファイル（[`docs/update-procedure.md`](../docs/update-procedure.md) には複製しない）。書き換えたら Routine 側の prompt にも反映すること。
 
 ---
 

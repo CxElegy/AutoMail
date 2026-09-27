@@ -12,6 +12,6 @@
 
 - **このリポジトリは public。** メールアドレス、注文番号・予約番号、人名、Drive のファイル ID、Artifact URL、Routine の trigger ID などの具体値をコミットしない。必要なら `{{PLACEHOLDER}}` で書き、実値は `config/config.local.md`（gitignore 済み）や Routine の prompt 側に置く。
 - メール本文・メールDB・台帳の中身（個人のやり取り）はリポジトリに入れない。
-- 運用ルールを変えたら、`docs/update-procedure.md` と `prompts/scheduled-task.md` の両方を同時に更新し、食い違わないようにする。Routine 側の prompt も更新が必要な場合はユーザーに伝える。
+- 1つのルールは1か所にだけ書く（軽量運転・起動条件は `prompts/scheduled-task.md`、それ以外の手順は `docs/update-procedure.md`、README は概要とリンクのみ）。複製すると更新漏れで食い違う。Routine 側の prompt も更新が必要な場合はユーザーに伝える。
 - 大きな節目（新カテゴリ追加・運用ルール変更）では `README.md` の変更履歴にも1行追記する。
 - ドキュメントは日本語で書く。
