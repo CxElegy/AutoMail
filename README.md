@@ -10,12 +10,16 @@ Gmail に届くメールから「期限」「受け取り」「移動・宿泊�
 
 | 場所 | 役割 |
 |---|---|
-| **Scheduled task（Routine）**「期限と受け取りボード」 | 毎日の起動条件と、その日の処理手順の本体。prompt の雛形は [`prompts/scheduled-task.md`](prompts/scheduled-task.md) |
-| **このリポジトリ** | 仕様・運用ルールの正本。[`docs/update-procedure.md`](docs/update-procedure.md) に詳細ルールを蓄積 |
+| **Scheduled task（Routine）**「期限と受け取りボード」 | 毎日 8:51／20:51 JST に起動する処理の入口。prompt の雛形は [`prompts/scheduled-task.md`](prompts/scheduled-task.md) |
+| **このリポジトリ** | 仕様・運用ルールを伏せ字にした写しと構成図。[`docs/update-procedure.md`](docs/update-procedure.md) に詳細ルールを蓄積 |
+| Google Drive `00_更新手順`・`00a_省トークン運転ルール` | Routine が実際に毎回読む手順書。直したらこのリポジトリにも反映する |
 | Google Drive `01_記録台帳 YYYY-MM` | 現在の状態のスナップショット（最後に読んだメールの受信時刻・カレンダー登録済みイベントID・未確認事項）。**月に1ファイル** |
 | Google Drive `02_メールDB（1件1ブリーフィング）` | 読んだメール全件の生記録。**日に1ファイル**、1メール＝1ブロック。広告・求人も含めすべて残す |
-| Artifact「期限と受け取りボード」 | 人間が実際に見る成果物。カレンダー・今日やること・受け取り待ち・期限一覧・ログイン通知をまとめた1枚の Web ページ |
-| Google カレンダー（primary） | 移動・宿泊・買い物・重要締め切りをイベントとして登録する場所 |
+| Artifact「期限と受け取りボード」 | 人間が実際に見る成果物。カレンダー・今日やること・受け取り待ち・期限一覧・ログイン通知をまとめた1枚の Web ページ。更新は週1回（土曜 20:51）＋緊急時だけ |
+| Google カレンダー（primary） | 移動・宿泊・買い物（日次合計）・重要締め切りをイベントとして登録する場所 |
+| スマートフォン（プッシュ通知・.ics） | 緊急の事案だけプッシュ通知。予定を新しく作った回は .ics を再発行 |
+
+構成図は [`design/Architecture.dc.html`](design/Architecture.dc.html)（Claude Design のキャンバス。`canvas.json` と一緒に読み込む）。
 
 ## 処理の流れ・ルール
 
@@ -27,13 +31,21 @@ Gmail に届くメールから「期限」「受け取り」「移動・宿泊�
 .
 ├── README.md                    # このファイル（システム概要）
 ├── CLAUDE.md                    # このリポジトリで作業する Claude 向けの指示
+├── design/
+│   ├── Architecture.dc.html     # 構成図（Claude Design のキャンバス）
+│   └── canvas.json              # 同キャンバスの設定
 ├── docs/
-│   └── update-procedure.md      # 詳細ルール（旧「00_更新手順（次回の自分へ）」）
+│   └── update-procedure.md      # 詳細ルール（「00_更新手順」＋「00a」7〜9節の写し）
 ├── prompts/
-│   └── scheduled-task.md        # Scheduled task の prompt 雛形
+│   └── scheduled-task.md        # Scheduled task の prompt 雛形・軽量／省トークン運転ルール（「00a」1〜6節）
 └── config/
     └── config.example.md        # 実運用で使う ID・アドレスの置き場所（値は書かない）
 ```
+
+## 今後の予定
+
+- [ ] 台帳とメールDBを Supabase に移す
+- [ ] 1日の流れ（タイムライン）の図を作る
 
 ## 変更履歴
 
@@ -46,3 +58,4 @@ Gmail に届くメールから「期限」「受け取り」「移動・宿泊�
 - **2026-09-23**：Google Drive から GitHub リポジトリ（本リポジトリ）へ移行。
 - **2026-09-24**：英検S-CBT受験日（申込日とは別の日）のカレンダー登録漏れを修正。「申込日と実施日を両方登録する」ルールと、「.icsは create_event を1件でも呼んだら無条件で再発行する」機械的な基準を追加。
 - **2026-09-27**：ponytail（YAGNI・重複排除）の観点で整理。ボードの未使用CSS/JSを削除し、絞り込みの説明文が出ない不具合（未定義変数 `adN`）を修正。README とルール文書の重複記述を削り、正本を1か所に。
+- **2026-10-12**：Drive 版の手順書（00・00a）に同期。起動を1日2回（8:51／20:51）に、ボード更新を週1回＋緊急時に変更したことを反映。買い物の日次合計・カレンダー件名の `[ ]` 形式・金融機関／行政事案の緊急扱いを追記。構成図（`design/`）を追加。
