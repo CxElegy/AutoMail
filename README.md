@@ -33,8 +33,11 @@ Gmail に届くメールから「期限」「受け取り」「移動・宿泊�
 ├── CLAUDE.md                    # このリポジトリで作業する Claude 向けの指示
 ├── design/
 │   ├── Architecture.dc.html     # 構成図（Claude Design のキャンバス）
+│   ├── Automation.dc.html       # 省トークン自動化の構成図（案）
 │   └── canvas.json              # 同キャンバスの設定
 ├── docs/
+│   ├── automation-plan.md       # 省トークン自動化の計画（案）
+│   ├── design/automation.png    # 同 構成図の画像
 │   └── update-procedure.md      # 詳細ルール（「00_更新手順」＋「00a」7〜9節の写し）
 ├── prompts/
 │   └── scheduled-task.md        # Scheduled task の prompt 雛形・軽量／省トークン運転ルール（「00a」1〜6節）
@@ -44,7 +47,7 @@ Gmail に届くメールから「期限」「受け取り」「移動・宿泊�
 
 ## 今後の予定
 
-- [ ] 台帳とメールDBを Supabase に移す
+- [ ] 省トークン自動化への移行（スクリプトが集めて AI は判断だけ）：[`docs/automation-plan.md`](docs/automation-plan.md)、構成図 [`docs/design/automation.png`](docs/design/automation.png)。台帳とメールDBの Supabase 移行もここに含む
 - [ ] 1日の流れ（タイムライン）の図を作る
 
 ## 変更履歴

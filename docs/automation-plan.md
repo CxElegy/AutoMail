@@ -1,0 +1,45 @@
+# 省トークン自動化の計画（案）
+
+構成図：[`docs/design/automation.png`](design/automation.png)（源ファイル [`design/Automation.dc.html`](../design/Automation.dc.html)）
+
+**まだ提案の段階で、現在の運用は [`prompts/scheduled-task.md`](../prompts/scheduled-task.md) のまま。** 移行が済んだ部分から、そちらと [`update-procedure.md`](update-procedure.md) を書き換える。
+
+## 考え方
+
+Wishlist（関注清単通信）と同じく、**スクリプトが集めて計算し、AI は判断だけ**にする。今の Routine は、新着が0件の回でも手順書（約32KB）と台帳を読む。台帳・メールDBは毎回全文を書き直し、ボードも全文を読み込んで publish している。トークンのほとんどは、判断の要らないこうした作業に使われている。
+
+## 分担
+
+| どこで | 何をする | 費用 |
+|---|---|---|
+| Google Apps Script（自分の Google アカウント内、時間トリガーで毎時） | 取得、ルールで分類、DB に記録、カード通知の日次合計、到着・予約の予定登録、緊急の Discord 通知、週まとめ、AI 判定の反映、ボードの描画（Web アプリ） | 無料 |
+| Claude Routine（キューがあるときだけ API で起動） | ルールで決まらないメールの判断（分類・予定の日付・要約・緊急度）。読むのは短い `RULES.md` とキューの JSON だけで、判定 JSON を DB に返す | サブスク枠 |
+| Supabase（非公開） | `mails`（1通1行）、`state`（旧 台帳）、`ai_queue` / `ai_decisions`、`rules` | 無料 |
+| GitHub（このリポジトリ・公開） | Apps Script のコード（clasp）、文書、ダミーデータのテスト。個人データは置かない | 無料 |
+
+GitHub Actions ではなく Apps Script を選ぶ理由：
+
+- 公開リポジトリの Actions はログも公開される。
+- Gmail の OAuth トークンを外部に預けずに済む。
+- メールの中身が Google と非公開 DB の外に出ない。
+
+## 移行の順番（各段階で今の Routine と並走させて結果を比べる）
+
+1. **取得と記録だけ**：Apps Script が新着を取得し、ルールで分類して `mails` に書く。Routine は今のまま動かし、分類結果を突き合わせる。
+2. **機械処理を移す**：広告・カード通知・注文・配送をスクリプト側で処理する。Routine の prompt から該当部分を外す。
+3. **緊急通知と週まとめ**：Discord（Wishlist と同じ Webhook 方式）に切り替える。
+4. **ボードを Web アプリへ**：Artifact の週次 publish をやめる。
+5. **Routine をキュー起動に**：cron をやめ、`ai_queue` が1件以上のときだけ Apps Script から API で起動する。`RULES.md` を新設し、手順書の全文は読ませない。
+6. **ルールを育てる**：AI が同じ送信元に3回同じ判定を出したら、ルール追加の案を `state` に残す（追加は本人が承認）。
+
+## 決めること
+
+- DB は Supabase と Google スプレッドシートのどちらにするか。Supabase は Wishlist と揃うが、secret key を Apps Script のスクリプトプロパティに置く必要がある。スプレッドシートならデータが Google から出ない。
+- 通知の先：Discord（Wishlist と同じ）でよいか。
+- `.ics` の再送をやめ、スマホで Google カレンダーを直接同期する形でよいか。
+- ルール表（送信元ドメインなど）は利用中の金融機関が分かってしまうので、公開リポジトリではなく非公開 DB に置く。
+
+## 注意
+
+- Apps Script には実行時間の上限がある（1回の実行・1日のトリガー合計）。毎時の取得は上限を見ながら件数を区切る。
+- 構成図の「広告 7割／カード・注文 2割／AI 行き 1割」は仮定で、実測ではない。段階1のあとで `mails` から実際の割合を出す。
