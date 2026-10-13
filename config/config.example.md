@@ -13,5 +13,8 @@
 | `MANUAL_FOLDER_ID` | 手順書（`00_更新手順`・`00a_省トークン運転ルール`）を置くフォルダの ID（現状は MAILDB と同じ） | 同上 |
 | `MAILDB_FOLDER_ID` | `02_メールDB（1件1ブリーフィング）` フォルダの ID | 同上 |
 | `TRIGGER_ID` | Scheduled task（Routine）の ID | `trig_xxxxxxxxxxxxxxxxxxxxxxxx` |
+| `SUPABASE_URL` | Supabase の AutoMail プロジェクトの URL（Apps Script のスクリプトプロパティに置く） | `https://xxxxxxxx.supabase.co` |
+| `SUPABASE_SECRET_KEY` | 同 secret key（スクリプトプロパティだけに置く。ファイルに書かない） | `sb_secret_...` |
+| `SELF_ADDRESSES` | 自分宛メモの送信元（カンマ区切り。スクリプトプロパティ） | `you@outlook.com` |
 | `CALENDAR_ID` | 書き込み先カレンダー | `primary` |
 | `FORWARDING_SOURCE` | 自分宛メモ・転送元のアドレス（Outlook 等） | `you@outlook.com` |

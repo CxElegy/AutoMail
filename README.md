@@ -31,6 +31,9 @@ Gmail に届くメールから「期限」「受け取り」「移動・宿泊�
 .
 ├── README.md                    # このファイル（システム概要）
 ├── CLAUDE.md                    # このリポジトリで作業する Claude 向けの指示
+├── apps-script/                 # 省トークン自動化のスクリプト（段階1：取得→分類→Supabase）。設定手順は中の README
+├── db/
+│   └── automail.sql             # Supabase のテーブル定義
 ├── design/
 │   ├── Architecture.dc.html     # 構成図（Claude Design のキャンバス）
 │   ├── Automation.dc.html       # 省トークン自動化の構成図（案）
@@ -41,6 +44,7 @@ Gmail に届くメールから「期限」「受け取り」「移動・宿泊�
 │   └── update-procedure.md      # 詳細ルール（「00_更新手順」＋「00a」7〜9節の写し）
 ├── prompts/
 │   └── scheduled-task.md        # Scheduled task の prompt 雛形・軽量／省トークン運転ルール（「00a」1〜6節）
+├── tests/                       # 分類ルールと run() のテスト（ダミーデータのみ。node --test tests/*.test.js）
 └── config/
     └── config.example.md        # 実運用で使う ID・アドレスの置き場所（値は書かない）
 ```
@@ -62,3 +66,4 @@ Gmail に届くメールから「期限」「受け取り」「移動・宿泊�
 - **2026-09-24**：英検S-CBT受験日（申込日とは別の日）のカレンダー登録漏れを修正。「申込日と実施日を両方登録する」ルールと、「.icsは create_event を1件でも呼んだら無条件で再発行する」機械的な基準を追加。
 - **2026-09-27**：ponytail（YAGNI・重複排除）の観点で整理。ボードの未使用CSS/JSを削除し、絞り込みの説明文が出ない不具合（未定義変数 `adN`）を修正。README とルール文書の重複記述を削り、正本を1か所に。
 - **2026-10-12**：Drive 版の手順書（00・00a）に同期。起動を1日2回（8:51／20:51）に、ボード更新を週1回＋緊急時に変更したことを反映。買い物の日次合計・カレンダー件名の `[ ]` 形式・金融機関／行政事案の緊急扱いを追記。構成図（`design/`）を追加。
+- **2026-10-14**：省トークン自動化の段階1（Apps Script で Gmail を取得・分類して Supabase に記録）を追加。DB は Wishlist と別の Supabase プロジェクト、通知は Discord、カレンダーはスマホで直接同期と決定。

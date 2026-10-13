@@ -4,3 +4,6 @@ config/*.local.md
 *.ics
 exports/
 .DS_Store
+
+# clasp の設定（スクリプト ID を含むのでコミットしない）
+.clasp.json

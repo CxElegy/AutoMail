@@ -25,18 +25,22 @@ GitHub Actions ではなく Apps Script を選ぶ理由：
 
 ## 移行の順番（各段階で今の Routine と並走させて結果を比べる）
 
-1. **取得と記録だけ**：Apps Script が新着を取得し、ルールで分類して `mails` に書く。Routine は今のまま動かし、分類結果を突き合わせる。
+1. **取得と記録だけ**（コード・DB は用意済み。設定手順は [`apps-script/README.md`](../apps-script/README.md)）：Apps Script が新着を取得し、ルールで分類して `mails` に書く。Routine は今のまま動かし、分類結果を突き合わせる。
 2. **機械処理を移す**：広告・カード通知・注文・配送をスクリプト側で処理する。Routine の prompt から該当部分を外す。
 3. **緊急通知と週まとめ**：Discord（Wishlist と同じ Webhook 方式）に切り替える。
 4. **ボードを Web アプリへ**：Artifact の週次 publish をやめる。
 5. **Routine をキュー起動に**：cron をやめ、`ai_queue` が1件以上のときだけ Apps Script から API で起動する。`RULES.md` を新設し、手順書の全文は読ませない。
 6. **ルールを育てる**：AI が同じ送信元に3回同じ判定を出したら、ルール追加の案を `state` に残す（追加は本人が承認）。
 
-## 決めること
+## 決まったこと（2026-10-14）
 
-- DB は Supabase と Google スプレッドシートのどちらにするか。Supabase は Wishlist と揃うが、secret key を Apps Script のスクリプトプロパティに置く必要がある。スプレッドシートならデータが Google から出ない。
-- 通知の先：Discord（Wishlist と同じ）でよいか。
-- `.ics` の再送をやめ、スマホで Google カレンダーを直接同期する形でよいか。
+- DB は Supabase。Wishlist とは**別のプロジェクト**（AutoMail）にする。Wishlist の publishable key は公開ページに載っているため。
+- 通知は Discord（Wishlist と同じ Webhook 方式）。
+- `.ics` の再送はやめ、スマホで Google カレンダーを直接同期する。
+- 「前回の続き」は Gmail のラベルではなく受信時刻で管理する。ラベルはスレッド単位なので、ラベル済みのスレッドへの返信（自分宛メモへの返信など）を取りこぼすため。
+
+## 守ること
+
 - ルール表（送信元ドメインなど）は利用中の金融機関が分かってしまうので、公開リポジトリではなく非公開 DB に置く。
 
 ## 注意
