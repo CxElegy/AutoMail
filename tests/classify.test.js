@@ -82,3 +82,45 @@ test('差出人の分解', () => {
   assert.deepEqual(parseAddress('"Example Shop" <Info@Example.com>'), { name: 'Example Shop', address: 'info@example.com' });
   assert.deepEqual(parseAddress('plain@example.com'), { name: '', address: 'plain@example.com' });
 });
+
+const { unwrapForward, compactBody, hasUnsubscribeText } = require('../apps-script/Classify.js');
+const FW_BODY = [
+  '________________________________',
+  'From: サンプル商店 <news@shop.example>',
+  'Sent: Tuesday, October 13, 2026 4:09:06 PM (UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi',
+  'To: me@example.org <me@example.org>',
+  'Subject: 秋の抽選販売を開催！',
+  '',
+  '会員様限定の抽選販売です。[https://img.example/logo.png]<https://click.example/a?b=c>',
+  '配信停止はこちら<https://click.example/stop>',
+].join('\n');
+
+test('Outlook の転送（FW:）は本文の元の差出人・件名を取り出す', () => {
+  const fw = unwrapForward('FW: 秋の抽選販売を開催！', FW_BODY);
+  assert.equal(fw.fromAddress, 'news@shop.example');
+  assert.equal(fw.fromName, 'サンプル商店');
+  assert.equal(fw.subject, '秋の抽選販売を開催！');
+  assert.ok(fw.body.startsWith('会員様限定'));
+  assert.equal(unwrapForward('秋の抽選販売', FW_BODY), null);       // 件名に FW: がなければ転送扱いしない
+  assert.equal(unwrapForward('FW: メモ', '本文だけ'), null);          // 見出しがなければ転送扱いしない
+});
+
+test('日本語の転送見出し（差出人・件名）も読める', () => {
+  const fw = unwrapForward('転送: ご注文の確認', '差出人: Shop <a@shop.example>\n送信日時: 2026年10月13日\n件名: ご注文の確認\n\n本文');
+  assert.equal(fw.fromAddress, 'a@shop.example');
+  assert.equal(fw.subject, 'ご注文の確認');
+  assert.equal(fw.body, '本文');
+});
+
+test('転送されたメールは元の差出人で分類し、自分のアドレスでも自分宛メモにしない', () => {
+  const fw = unwrapForward('FW: 秋の抽選販売を開催！', FW_BODY);
+  const body = compactBody(fw.body);
+  const c = classify(mail({ subject: fw.subject, fromAddress: fw.fromAddress, excerpt: body, listUnsubscribe: hasUnsubscribeText(body) }), [], SELF);
+  assert.equal(c.category, '広告');
+  // 転送でなく自分のアドレスから届いたもの（自分で書いたメモ）は自分宛メモ
+  assert.equal(classify(mail({ fromAddress: 'me@example.org', subject: '明日までに申請' }), [], SELF).category, '自分宛メモ');
+});
+
+test('本文からリンク先・画像の URL を除く', () => {
+  assert.equal(compactBody('文字[https://img.example/a.png]<https://x.example/b>\n\n\n\n次'), '文字\n\n次');
+});

@@ -94,6 +94,21 @@ test('上限を超えたら古い順に200通で止め、残りありと記録�
   assert.equal(e.calls.find((c) => c.path === 'runs').body[0].remaining, true);
 });
 
+test('Outlook から転送されたメールは中の元の差出人・件名で記録する', () => {
+  const now = Date.UTC(2026, 9, 13, 12);
+  const m = fakeMsg('fw', now - 1 * H, 'FW: カードご利用のお知らせ', 'me@example.org');
+  m.getPlainBody = () => '____\nFrom: サンプルカード <info@card.example>\nSent: x\nTo: me@example.org\nSubject: カードご利用のお知らせ\n\nご利用金額 3,000円';
+  const e = env({ now, cursor: now - 2 * H, messages: [m] });
+  e.props.SELF_ADDRESSES = 'me@example.org';
+  load(e).run();
+  const row = e.calls.find((c) => c.method === 'post' && c.path.startsWith('mails')).body[0];
+  assert.equal(row.from_address, 'info@card.example');
+  assert.equal(row.subject, 'カードご利用のお知らせ');
+  assert.equal(row.forwarded, true);
+  assert.equal(row.category, 'カード利用');
+  assert.deepEqual(row.amounts, [3000]);
+});
+
 test('Supabase のエラーは runs に残し、前回の続きは進めない', () => {
   const now = Date.UTC(2026, 9, 13, 12);
   const e = env({ now, cursor: now - 2 * H, messages: [fakeMsg('a', now - 1 * H, 'x')] });

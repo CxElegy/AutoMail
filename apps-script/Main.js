@@ -4,7 +4,9 @@
 // スクリプトプロパティ（プロジェクトの設定 → スクリプト プロパティ）：
 //   SUPABASE_URL         … https://<ref>.supabase.co
 //   SUPABASE_SECRET_KEY  … sb_secret_…（ファイルには書かない）
-//   SELF_ADDRESSES       … 自分宛メモの送信元（カンマ区切り。例：Outlook のアドレス）
+//   SELF_ADDRESSES       … 自分のアドレス（カンマ区切り。例：Outlook のアドレス）。
+//                          Outlook から「FW:」で転送されてきたものは中の元の差出人で分類し、
+//                          自分のアドレスから転送でなく届いたもの（自分で書いたメモ）だけを自分宛メモにする
 //   CURSOR_MS            … 「前回の続き」。setup() が今の時刻で初期化し、run() が進める
 
 const MAX_PER_RUN = 200;           // 1回に記録する上限（古い順）
@@ -94,14 +96,16 @@ function knownIds_(ids) {
 }
 
 function toRow_(msg, rules, selfAddresses) {
-  const from = parseAddress(msg.getFrom());
-  const body = (msg.getPlainBody() || '').replace(/\r/g, '').replace(/\n{3,}/g, '\n\n').trim();
+  const outer = parseAddress(msg.getFrom());
+  const rawBody = msg.getPlainBody() || '';
+  const fw = unwrapForward(msg.getSubject(), rawBody);
+  const body = compactBody(fw ? fw.body : rawBody);
   const m = {
-    subject: msg.getSubject() || '',
-    fromName: from.name,
-    fromAddress: from.address,
+    subject: fw ? fw.subject : (msg.getSubject() || ''),
+    fromName: fw ? fw.fromName : outer.name,
+    fromAddress: fw ? fw.fromAddress : outer.address,
     excerpt: body.slice(0, EXCERPT_CHARS),
-    listUnsubscribe: !!msg.getHeader('List-Unsubscribe'),
+    listUnsubscribe: !!msg.getHeader('List-Unsubscribe') || hasUnsubscribeText(body),
   };
   const c = classify(m, rules, selfAddresses);
   const amounts = extractYen(m.subject + '\n' + m.excerpt);
@@ -109,12 +113,13 @@ function toRow_(msg, rules, selfAddresses) {
     id: msg.getId(),
     thread_id: msg.getThread().getId(),
     received_at: msg.getDate().toISOString(),
-    from_name: from.name,
-    from_address: from.address,
+    from_name: m.fromName,
+    from_address: m.fromAddress,
     to_address: parseAddress(String(msg.getTo() || '').split(',')[0]).address,
     subject: m.subject,
     excerpt: m.excerpt,
     list_unsubscribe: m.listUnsubscribe,
+    forwarded: !!fw,
     category: c.category,
     route: c.route,
     urgent: c.urgent,
