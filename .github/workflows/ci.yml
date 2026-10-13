@@ -15,5 +15,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: node --check apps-script/Main.js && node --check apps-script/Classify.js
+      - run: for f in apps-script/*.js; do node --check "$f"; done
       - run: node --test tests/*.test.js

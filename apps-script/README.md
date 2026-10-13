@@ -8,8 +8,11 @@
 
 | ファイル | 中身 |
 |---|---|
-| `Main.js` | `setup()`（初回だけ）と `run()`（毎時）。取得・記録・前回の続きの管理 |
-| `Classify.js` | 分類ルールと金額の抽出。外部 API を使わないので Node でテストできる（`node --test tests/*.test.js`） |
+| `Main.js` | `setup()`（初回だけ）と `run()`（毎時）。前回の続きの管理 |
+| `Fetch.js` | Gmail からの取得と、DB に書く1行への変換 |
+| `Classify.js` | 分類ルール |
+| `Parse.js` | 金額の抽出・Outlook の転送を開く・本文の整理・アドレスの分解 |
+| `Supabase.js` | Supabase の REST API |
 | `appsscript.json` | マニフェスト。権限は Gmail 読み取り・外部への通信・トリガーの3つだけ |
 | [`../db/automail.sql`](../db/automail.sql) | Supabase のテーブル（`mails` / `rules` / `state` / `runs`）。AutoMail プロジェクトに作成済み |
 
@@ -19,7 +22,8 @@
 2. **Apps Script のプロジェクトを作る**：[script.google.com](https://script.google.com) → 新しいプロジェクト（名前は AutoMail など）。
    - 左の歯車（プロジェクトの設定）→「`appsscript.json` マニフェスト ファイルをエディタで表示する」にチェック。
    - エディタで `appsscript.json` をこのフォルダのものに置き換える。
-   - ファイルを2つ追加（＋ → スクリプト）：`Classify`・`Main`。それぞれにこのフォルダの `Classify.js`・`Main.js` を貼る。最初からある `コード.gs` は消す。
+   - ファイルを5つ追加（＋ → スクリプト）：`Main`・`Fetch`・`Classify`・`Parse`・`Supabase`。それぞれにこのフォルダの同じ名前の `.js` を貼る。最初からある `コード.gs`（`Code.gs`）は消す。
+   - どのファイルも100行未満にしてある（端末によってはコピーが100行で切れるため）。貼ったあと、エディタの最終行の番号が `wc -l` の行数（Main 67・Fetch 63・Classify 75・Parse 59・Supabase 24）と合うか確かめる。
    - （clasp を使う場合は `clasp clone <スクリプトID>` → このフォルダで `clasp push`。`.clasp.json` はスクリプト ID を含むので `.gitignore` 済み）
 3. **スクリプトプロパティ**（歯車 → スクリプト プロパティ → 追加）：
 

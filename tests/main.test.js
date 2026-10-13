@@ -1,17 +1,8 @@
 // run() の流れのテスト：Gmail・スクリプトプロパティ・Supabase を偽物に差し替えて動かす（ダミーデータのみ）。
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
-const path = require('node:path');
-const vm = require('node:vm');
-
-function load(env) {
-  const ctx = vm.createContext(Object.assign({ console, Set, Date, JSON, Math, String, Number, Object, encodeURIComponent }, env));
-  for (const f of ['Classify.js', 'Main.js']) {
-    vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'apps-script', f), 'utf8'), ctx, { filename: f });
-  }
-  return ctx;
-}
+const loadAll = require('./load.js');
+const load = (env) => loadAll(env);
 
 const H = 3600 * 1000;
 function fakeMsg(id, ms, subject, from) {

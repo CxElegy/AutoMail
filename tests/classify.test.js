@@ -1,7 +1,11 @@
 // 分類ルールのテスト（ダミーのメールだけを使う。実際のメールは入れない）。実行：node --test tests/*.test.js
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { classify, extractYen, parseAddress } = require('../apps-script/Classify.js');
+const load = require('./load.js');
+// vm の関数は戻り値の Object が別物なので、deepEqual 用に JSON で通常のオブジェクトへ戻す
+const plain = (f) => (...a) => JSON.parse(JSON.stringify(f(...a)));
+const G = load({});
+const classify = plain(G.classify), extractYen = plain(G.extractYen), parseAddress = plain(G.parseAddress);
 
 const mail = (o) => Object.assign({ subject: '', fromName: '', fromAddress: 'noreply@example.com', excerpt: '', listUnsubscribe: false }, o);
 const SELF = ['me@example.org'];
@@ -83,7 +87,7 @@ test('差出人の分解', () => {
   assert.deepEqual(parseAddress('plain@example.com'), { name: '', address: 'plain@example.com' });
 });
 
-const { unwrapForward, compactBody, hasUnsubscribeText } = require('../apps-script/Classify.js');
+const unwrapForward = plain(G.unwrapForward), compactBody = G.compactBody, hasUnsubscribeText = G.hasUnsubscribeText;
 const FW_BODY = [
   '________________________________',
   'From: サンプル商店 <news@shop.example>',
