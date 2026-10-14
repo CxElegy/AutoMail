@@ -15,13 +15,13 @@ function nextDay_(day) {
   return new Date(jstMidnightMs_(day) + 33 * 3600 * 1000).toISOString().slice(0, 10);
 }
 
-function backfill() {
-  const started = Date.now();
+function backfill(budgetMs) {
+  const started = Date.now(), budget = budgetMs || TIME_BUDGET_MS;
   const props = PropertiesService.getScriptProperties();
   const selfAddresses = (props.getProperty('SELF_ADDRESSES') || '').split(',').map((s) => s.trim()).filter(Boolean);
   const rules = supabase_('GET', 'rules?select=*&enabled=eq.true&order=id.asc') || [];
   let day = props.getProperty('BACKFILL_NEXT') || BACKFILL_FROM, written = 0;
-  while (day < BACKFILL_TO && Date.now() - started < TIME_BUDGET_MS) {
+  while (day < BACKFILL_TO && Date.now() - started < budget) {
     const from = jstMidnightMs_(day), to = jstMidnightMs_(nextDay_(day));
     const msgs = [];
     for (let start = 0; ; start += 100) {
@@ -42,6 +42,7 @@ function backfill() {
     props.setProperty('BACKFILL_NEXT', day);
   }
   Logger.log((day >= BACKFILL_TO ? '完了' : '続きあり（もう一度 backfill を実行）次は ' + day) + '。今回 ' + written + ' 通を記録');
+  return { done: day >= BACKFILL_TO, next: day, written };
 }
 
 function planBackfill() {
@@ -59,4 +60,5 @@ function planBackfill() {
   supabase_('POST', 'state?on_conflict=key', [{ key: 'plan', value: Object.assign({ summary }, plan), updated_at: new Date().toISOString() }],
     'resolution=merge-duplicates,return=minimal');
   Logger.log('計画を保存しました：' + JSON.stringify(summary));
+  return summary;
 }

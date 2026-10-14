@@ -63,3 +63,23 @@ from mails where route = 'ai' order by received_at desc limit 50;
 ## 止めるとき
 
 Apps Script の左メニュー「トリガー」で `run` のトリガーを削除する。Supabase のデータは残る。
+
+## コピペせずに反映する（Apps Script API・任意）
+
+一度だけ設定すれば、Claude がクラウドのセッションから `node tools/gas-push.mjs --push` でコードを上書きできる。
+
+1. [script.google.com/home/usersettings](https://script.google.com/home/usersettings) で「Google Apps Script API」をオンにする（Gmail のアカウントで）。
+2. [Google Cloud Console](https://console.cloud.google.com/) でプロジェクトを作る：
+   - 「Apps Script API」を有効にする。
+   - OAuth 同意画面は「外部」。作成後に「本番環境に公開」する（テストのままだと 7 日でトークンが切れる）。
+   - 認証情報 →「OAuth クライアント ID」→「ウェブ アプリケーション」。承認済みのリダイレクト URI に `https://developers.google.com/oauthplayground` を入れる。
+3. [OAuth 2.0 Playground](https://developers.google.com/oauthplayground) で：
+   - 右上の歯車 →「Use your own OAuth credentials」に 2 のクライアント ID とシークレットを入れる。
+   - 左の入力欄に `https://www.googleapis.com/auth/script.projects` だけを入れて Authorize → Gmail のアカウントで許可。
+   - 「Exchange authorization code for tokens」で出る refresh token を控える。
+4. Apps Script の歯車（プロジェクトの設定）で「スクリプト ID」を控える。
+5. Claude のクラウド環境の設定（セッション上部の環境名 → 編集）のシークレット（環境変数）に入れる：
+   `GAS_CLIENT_ID`・`GAS_CLIENT_SECRET`・`GAS_REFRESH_TOKEN`・`GAS_SCRIPT_ID`。チャットやファイルには書かない。
+6. 新しいセッションを始める（シークレットは新しいセッションから読まれる）。
+
+試験用の関数（`backfill`・`planBackfill`）は、Supabase の state 'command' に指示を書くと毎時の `run()` が実行する（[`Command.js`](Command.js)）。

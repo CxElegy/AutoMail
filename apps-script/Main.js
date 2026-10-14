@@ -57,6 +57,9 @@ function run() {
     supabase_('POST', 'state?on_conflict=key',
       [{ key: 'cursor', value: { ms: cursorAfter, jst: jst_(cursorAfter), remaining }, updated_at: new Date().toISOString() }],
       'resolution=merge-duplicates,return=minimal');
+    // 残り時間で Supabase の指示（state 'command'）を実行する（Command.js）
+    const budget = TIME_BUDGET_MS - (Date.now() - started);
+    if (budget > 60 * 1000) record.command = runCommand_(budget);
     Object.assign(record, { fetched: fresh.length, written: rows.length, remaining, cursor_after: new Date(cursorAfter).toISOString() });
   } catch (e) {
     record.error = String(e && e.message || e).slice(0, 1000);

@@ -117,3 +117,27 @@ test('Supabase のエラーは runs に残し、前回の続きは進めない',
   assert.equal(e.props.CURSOR_MS, String(now - 2 * H));
   assert.match(e.calls.find((c) => c.path === 'runs').body[0].error, /500/);
 });
+
+test('state の command（planBackfill）を run() のついでに実行し、結果を done で書き戻す', () => {
+  const now = Date.UTC(2026, 9, 13, 12);
+  const e = env({ now, cursor: now - 1 * H, messages: [] });
+  const realFetch = e.UrlFetchApp.fetch;
+  e.UrlFetchApp.fetch = (url, opt) => (opt.method === 'get' && url.includes('state?select=value&key=eq.command')
+    ? { getResponseCode: () => 200, getContentText: () => JSON.stringify([{ value: { name: 'planBackfill', status: 'pending' } }]) }
+    : realFetch(url, opt));
+  load(e).run();
+  const cmd = e.calls.filter((c) => c.method === 'post' && c.path.startsWith('state')).map((c) => c.body[0]).find((b) => b.key === 'command');
+  assert.equal(cmd.value.status, 'done');
+  assert.equal(e.calls.find((c) => c.path === 'runs').body[0].command, 'done');
+});
+
+test('一覧にない command は実行しない', () => {
+  const now = Date.UTC(2026, 9, 13, 12);
+  const e = env({ now, cursor: now - 1 * H, messages: [] });
+  const realFetch = e.UrlFetchApp.fetch;
+  e.UrlFetchApp.fetch = (url, opt) => (opt.method === 'get' && url.includes('key=eq.command')
+    ? { getResponseCode: () => 200, getContentText: () => JSON.stringify([{ value: { name: 'setup', status: 'pending' } }]) }
+    : realFetch(url, opt));
+  load(e).run();
+  assert.equal(e.calls.find((c) => c.path === 'runs').body[0].command, null);
+});

@@ -56,7 +56,8 @@ create table if not exists public.runs (
   remaining     boolean not null default false, -- 上限・時間切れで次回に持ち越したか
   cursor_before timestamptz,
   cursor_after  timestamptz,
-  error         text
+  error         text,
+  command       text                            -- このとき実行した state 'command' の結果（pending / done / error）
 );
 
 alter table public.mails enable row level security;
