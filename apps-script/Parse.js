@@ -38,6 +38,8 @@ function unwrapForward(subject, body) {
 function compactBody(body) {
   return String(body || '')
     .replace(/\r/g, '')
+    .replace(/[\u034F\u00AD\u200B-\u200F\u2060\uFEFF\u202A-\u202E]/g, '')   // 見えない文字（Amazon は先頭に大量にある）
+    .replace(/[ \t]{2,}/g, ' ')
     .replace(/\[https?:\/\/[^\]\s]*\]/g, '')   // [https://…画像]
     .replace(/<https?:\/\/[^>\s]*>/g, '')       // 文字<https://…リンク先>
     .replace(/[ \t]+\n/g, '\n')

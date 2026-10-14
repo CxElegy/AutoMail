@@ -32,6 +32,19 @@ module.exports = [
   row({ n: 'R', category: '自分宛メモ', route: 'ai', subject: 'RE: 10/20までに区役所で手続き', excerpt: 'もう終わった', received_at: '2026-10-14T01:00:00Z' }),
   row({ n: 'S', category: '自分宛メモ', route: 'ai', subject: '牛乳を買う', received_at: '2026-10-14T01:00:00Z' }),
   row({ n: 'T', category: '自分宛メモ', route: 'ai', subject: '1/10 確定申告の書類をそろえる', received_at: '2026-10-14T01:00:00Z' }),
+  // ---- 実際のメールと同じ形式（値はすべて架空） ----
+  row({ n: 'U', category: 'カード利用', subject: 'ご利用のお知らせ【サンプルカード】', received_at: '2026-09-30T10:14:00Z',
+        excerpt: 'カードの利用内容をお知らせします。\n\nご利用内容\n\nご利用日時：2026/09/30 19:13\nSAMPLE STORE JPN（買物） 1,640.00 JPY\n\n本メールは…' }),
+  row({ n: 'V', category: 'カード利用', subject: 'ご利用のお知らせ【サンプルカード】', received_at: '2026-09-27T03:33:00Z',
+        excerpt: 'ご利用日時：2026/09/27 12:30\nSAMPLE AI SERVICE（買物） 22.00 USD' }),
+  row({ n: 'W', category: '買い物', subject: '【ANA】決済完了のお知らせ', from_name: 'ANA (ALL NIPPON AIRWAYS)', received_at: '2026-09-23T00:40:00Z',
+        excerpt: '■ご予約内容\n 2026年09月23日 09時39分現在 (日本時間)\n\n■フライト詳細\n[1]09月24日(木) NH000\n 東京(羽田) - 広島\n 出発ターミナル：2\n 07:05発08:25着\n エコノミークラス：Q / 確定\n\n■お支払い/適用規則\n＜お支払い総額＞\n 22,920円' }),
+  row({ n: 'X', category: '移動・宿泊', subject: '【スマートEX】 新幹線予約内容', from_address: 'yoyaku@expy.jp', received_at: '2026-09-18T08:57:00Z',
+        excerpt: '予約結果は以下のとおりです。\n\n領収額は、合計　11,150円です。\n\n■予約内容\n乗車日　2026年9月18日\n広島(18:12)→のぞみ000号→新大阪(19:37)\nおとな1名\n発売額　11,150円' }),
+  row({ n: 'Y', category: '移動・宿泊', subject: '【スマートEX】 本日(2026年9月18日)乗車分の予約について', from_address: 'yoyaku@expy.jp', received_at: '2026-09-18T00:00:00Z',
+        excerpt: '乗車日　2026年9月18日\n広島(18:12)→のぞみ000号→新大阪(19:37)\n領収額は、合計　11,150円' }),
+  row({ n: 'Z', category: '買い物', subject: '注文済み: 「サンプル試験紙...」', from_name: 'Amazon.co.jp', received_at: '2026-09-30T14:15:00Z',
+        excerpt: 'ご注文ありがとうございます。\n\n明日到着予定\n注文番号 000-0000000-0000000\n\n[サンプル試験紙 160枚入]\n数量: 1\n\n￥449\n\n合計 ￥0\n\nもう一度買う' }),
 ];
 if (require.main === module) {
   const load = require('./load.js');

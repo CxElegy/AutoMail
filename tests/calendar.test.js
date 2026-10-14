@@ -19,11 +19,11 @@ test('取消は同じ日の合計からマイナスする', () => {
 const ev = (kind) => plan.events.filter((e) => e.kind === kind);
 
 test('到着は到着日に別の予定（金額なし）', () => {
-  assert.deepEqual(ev('arrival'), [{ kind: 'arrival', date: '2026-10-16', summary: '[Amazon] 猫用フード 2kg 到着予定', colorId: 7 }]);
+  assert.deepEqual(ev('arrival').filter((e) => e.date === '2026-10-16'), [{ kind: 'arrival', date: '2026-10-16', summary: '[Amazon] 猫用フード 2kg 到着予定', colorId: 7 }]);
 });
 
 test('飛行機の往復は便ごとに2件、新幹線は1件。乗る日に時刻つき・移動の色（9）', () => {
-  assert.deepEqual(ev('trip').map((e) => [e.date, e.start, e.end, e.summary, e.colorId]), [
+  assert.deepEqual(ev('trip').filter((e) => e.date >= '2026-10-01').map((e) => [e.date, e.start, e.end, e.summary, e.colorId]), [
     ['2026-10-20', '07:05', '08:10', '[ANA] NH123 羽田 07:05 → 伊丹 08:10', 9],
     ['2026-10-22', '19:30', '20:40', '[ANA] NH456 伊丹 19:30 → 羽田 20:40', 9],
     ['2026-10-25', '09:00', '11:27', '[スマートEX] 新幹線 東京→新大阪（のぞみ201号） 09:00', 9],
@@ -53,4 +53,28 @@ test('AI に回す：金額が読めないカード通知・宿泊・曖昧な�
 test('同じ入力なら何回計算しても同じ（二重計上しない）', () => {
   const again = JSON.parse(JSON.stringify(load({}).planCalendar(examples.concat(examples))));
   assert.deepEqual(again.totals, plan.totals);
+});
+
+test('実際の形式：カード通知の「店名（買物） 金額 JPY」を読み、USD は外貨として別に付ける', () => {
+  assert.equal(plan.totals.find((t) => t.date === '2026-09-30').summary, '[買] 1,640円');   // Amazon は合計 ￥0（ポイント）なので数えない
+  assert.equal(plan.totals.find((t) => t.date === '2026-09-27').summary, '[買] $22');
+});
+
+test('実際の形式：ANA の決済完了は乗る日の予定＋買った日の支払い', () => {
+  assert.ok(ev('trip').some((e) => e.date === '2026-09-24' && e.summary === '[ANA] NH000 羽田 07:05 → 広島 08:25'));
+  assert.match(plan.totals.find((t) => t.date === '2026-09-23').description, /ANA \(ALL NIPPON AIRWAYS\)|ANA 22,920円/);
+  assert.match(plan.totals.find((t) => t.date === '2026-09-23').summary, /22,920円/);
+});
+
+test('実際の形式：スマートEX は予定1件、当日の案内メールは予定も代金も重ねない', () => {
+  assert.deepEqual(ev('trip').filter((e) => e.date === '2026-09-18').map((e) => e.summary), ['[スマートEX] 新幹線 広島→新大阪（のぞみ000号） 18:12']);
+  assert.equal(plan.totals.find((t) => t.date === '2026-09-18').summary, '[買] 11,150円');
+});
+
+test('実際の形式：Amazon の「明日到着予定」は受信日の翌日に到着予定を作る', () => {
+  assert.ok(ev('arrival').some((e) => e.date === '2026-10-01' && e.summary === '[Amazon] サンプル試験紙 160枚入 到着予定'));
+});
+
+test('本文の見えない文字を消す（Amazon の先頭に大量にあり、本文の先頭 1,500 字を埋めてしまう）', () => {
+  assert.equal(load({}).compactBody('注文済み͏ ­͏ ­͏ ­\nご注文'), '注文済み\nご注文');
 });
