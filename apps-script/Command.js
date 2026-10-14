@@ -1,9 +1,9 @@
-// Supabase の state 'command' に書かれた指示を、毎時の run() のついでに実行する（Claude が Apps Script を開かずに試験を動かすため）。
+// Supabase の state 'command' に書かれた指示を、毎時の run() のついでに実行する（Claude が Apps Script を開かずに動かすため）。
 // 書き方（SQL）：insert into state(key, value) values ('command', '{"name":"backfill","status":"pending"}')
 //               on conflict (key) do update set value = excluded.value;
 // 実行できるのは下の一覧の関数だけ。backfill は時間切れで続きがあれば pending のまま残し、次の回に続ける。
 
-const COMMANDS = { backfill: (budget) => backfill(budget), planBackfill: () => planBackfill() };
+const COMMANDS = { backfill: (budget) => backfill(budget) };
 
 function runCommand_(budgetMs) {
   const got = supabase_('GET', 'state?select=value&key=eq.command') || [];

@@ -59,14 +59,14 @@ test('新着を古い順に記録し、前回の続きを最後の1通まで進�
   load(e).run();
   const post = e.calls.find((c) => c.method === 'post' && c.path.startsWith('mails'));
   assert.deepEqual(post.body.map((r) => r.id), ['a', 'b']);
-  assert.deepEqual(post.body.map((r) => r.category), ['広告', '買い物']);
-  assert.deepEqual(post.body[0].amounts, [1200]);
   assert.equal(post.body[0].to_address, 'me@example.com');
+  assert.equal(post.body[0].excerpt, '合計 1,200円');
+  // 判断はしない：分類・金額・ラベルはスクリプトでは付けない（AI が後で書く）
+  assert.equal(post.body[0].category, undefined);
+  assert.equal(post.body[0].amounts, undefined);
+  assert.deepEqual(e.labelCalls, []);
   assert.equal(post.headers.Authorization, undefined);  // sb_secret_ は apikey だけ
   assert.equal(e.props.CURSOR_MS, String(now - 1 * H));
-  // 広告（セール）だけに automail-skip ラベル
-  assert.deepEqual(e.labelCalls, [{ name: 'automail-skip', n: 1 }]);
-  assert.deepEqual(post.body.map((r) => !!r.skip_label), [true, false]);
   const run = e.calls.find((c) => c.path === 'runs').body[0];
   assert.equal(run.written, 2);
   assert.equal(run.remaining, false);
@@ -103,8 +103,19 @@ test('Outlook から転送されたメールは中の元の差出人・件名で
   assert.equal(row.from_address, 'info@card.example');
   assert.equal(row.subject, 'カードご利用のお知らせ');
   assert.equal(row.forwarded, true);
-  assert.equal(row.category, 'カード利用');
-  assert.deepEqual(row.amounts, [3000]);
+  assert.equal(row.self_sent, false);
+  assert.equal(row.excerpt, 'ご利用金額 3,000円');
+});
+
+test('自分のアドレスから転送でなく届いたもの（自分で書いたメモ）には self_sent を付ける', () => {
+  const now = Date.UTC(2026, 9, 13, 12);
+  const m = fakeMsg('memo', now - 1 * H, '10/20 病院', 'Me <me@example.org>');
+  const e = env({ now, cursor: now - 2 * H, messages: [m] });
+  e.props.SELF_ADDRESSES = 'me@example.org';
+  load(e).run();
+  const row = e.calls.find((c) => c.method === 'post' && c.path.startsWith('mails')).body[0];
+  assert.equal(row.self_sent, true);
+  assert.equal(row.forwarded, false);
 });
 
 test('Supabase のエラーは runs に残し、前回の続きは進めない', () => {
@@ -118,12 +129,12 @@ test('Supabase のエラーは runs に残し、前回の続きは進めない',
   assert.match(e.calls.find((c) => c.path === 'runs').body[0].error, /500/);
 });
 
-test('state の command（planBackfill）を run() のついでに実行し、結果を done で書き戻す', () => {
+test('state の command（backfill）を run() のついでに実行し、結果を done で書き戻す', () => {
   const now = Date.UTC(2026, 9, 13, 12);
   const e = env({ now, cursor: now - 1 * H, messages: [] });
   const realFetch = e.UrlFetchApp.fetch;
   e.UrlFetchApp.fetch = (url, opt) => (opt.method === 'get' && url.includes('state?select=value&key=eq.command')
-    ? { getResponseCode: () => 200, getContentText: () => JSON.stringify([{ value: { name: 'planBackfill', status: 'pending' } }]) }
+    ? { getResponseCode: () => 200, getContentText: () => JSON.stringify([{ value: { name: 'backfill', status: 'pending' } }]) }
     : realFetch(url, opt));
   load(e).run();
   const cmd = e.calls.filter((c) => c.method === 'post' && c.path.startsWith('state')).map((c) => c.body[0]).find((b) => b.key === 'command');

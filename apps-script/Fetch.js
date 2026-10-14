@@ -29,35 +29,23 @@ function knownIds_(ids) {
   return known;
 }
 
-function toRow_(msg, rules, selfAddresses) {
+// DB に書く1行。整えるだけで、分類や金額の読み取りはしない（category などは AI が後で書く）。
+function toRow_(msg, selfAddresses) {
   const outer = parseAddress(msg.getFrom());
   const rawBody = msg.getPlainBody() || '';
   const fw = unwrapForward(msg.getSubject(), rawBody);
   const body = compactBody(fw ? fw.body : rawBody);
-  const m = {
-    subject: fw ? fw.subject : (msg.getSubject() || ''),
-    fromName: fw ? fw.fromName : outer.name,
-    fromAddress: fw ? fw.fromAddress : outer.address,
-    excerpt: body.slice(0, EXCERPT_CHARS),
-    listUnsubscribe: !!msg.getHeader('List-Unsubscribe') || hasUnsubscribeText(body),
-  };
-  const c = classify(m, rules, selfAddresses);
-  const amounts = extractYen(m.subject + '\n' + m.excerpt);
   return {
     id: msg.getId(),
     thread_id: msg.getThread().getId(),
     received_at: msg.getDate().toISOString(),
-    from_name: m.fromName,
-    from_address: m.fromAddress,
+    from_name: fw ? fw.fromName : outer.name,
+    from_address: fw ? fw.fromAddress : outer.address,
     to_address: parseAddress(String(msg.getTo() || '').split(',')[0]).address,
-    subject: m.subject,
-    excerpt: m.excerpt,
-    list_unsubscribe: m.listUnsubscribe,
+    subject: fw ? fw.subject : (msg.getSubject() || ''),
+    excerpt: body.slice(0, EXCERPT_CHARS),
+    list_unsubscribe: !!msg.getHeader('List-Unsubscribe'),
     forwarded: !!fw,
-    category: c.category,
-    route: c.route,
-    urgent: c.urgent,
-    rule: c.rule,
-    amounts: amounts.length ? amounts : null,
+    self_sent: !fw && selfAddresses.indexOf(outer.address) >= 0,
   };
 }

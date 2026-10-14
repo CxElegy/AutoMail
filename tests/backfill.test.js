@@ -1,4 +1,4 @@
-// backfill() と planBackfill() のテスト（偽の Gmail・Supabase、ダミーデータのみ）。
+// backfill() のテスト（偽の Gmail・Supabase、ダミーデータのみ）。
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const load = require('./load.js');
@@ -8,7 +8,7 @@ const msg = (id, iso, subject, body) => ({
   getTo: () => 'me@example.com', getPlainBody: () => body || '', getHeader: () => '', getThread: () => ({ getId: () => 't' + id }),
 });
 
-test('1日ずつ取得して記録し、続きの日付を覚える。計画を state に保存する', () => {
+test('1日ずつ取得して記録し、続きの日付を覚える', () => {
   const props = { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_SECRET_KEY: 'sb_secret_x' };
   const mails = [msg('a', '2026-09-01T00:30:00Z', 'カードご利用のお知らせ', 'ご利用日時：2026/09/01 09:30\nご利用先：店\nご利用金額：500円'),
                  msg('b', '2026-09-30T14:00:00Z', 'セール')];   // 9/30 23:00 JST
@@ -29,10 +29,7 @@ test('1日ずつ取得して記録し、続きの日付を覚える。計画を 
   });
   assert.equal(G.nextDay_('2026-09-30'), '2026-10-01');
   G.backfill();
-  assert.deepEqual(db.map((r) => [r.id, r.category]), [['a', 'カード利用'], ['b', '広告']]);
+  assert.deepEqual(db.map((r) => r.id), ['a', 'b']);
+  assert.equal(db[0].category, undefined);
   assert.equal(props.BACKFILL_NEXT, '2026-10-01');
-  G.planBackfill();
-  const plan = posts.find((x) => x.p.startsWith('state')).body[0].value;
-  assert.equal(plan.summary.mails, 2);
-  assert.equal(plan.totals[0].summary, '[買] 500円');
 });

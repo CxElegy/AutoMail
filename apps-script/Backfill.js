@@ -1,8 +1,6 @@
-// 過去の期間をまとめて読む（試験用・手で実行する）。
-// backfill()：BACKFILL_FROM〜BACKFILL_TO（JST）のメールを1日ずつ mails に記録する。広告ラベルは付けず、前回の続きも動かさない。
-//   6分の上限があるので途中で止まったら、ログに「完了」が出るまで backfill を繰り返し実行する（続きは BACKFILL_NEXT に記録）。
-// planBackfill()：記録した期間のメールにカレンダー統合の計画（Calendar.js）をかけ、結果を state の 'plan' に保存する。
-//   カレンダーにはまだ何も書かない。
+// 過去の期間をまとめて mails に記録する（手で実行するか、Supabase の state 'command' で指示する）。
+// backfill()：BACKFILL_FROM〜BACKFILL_TO（JST）のメールを1日ずつ記録する。前回の続き（CURSOR_MS）は動かさない。
+//   6分の上限があるので途中で止まったら、ログに「完了」が出るまで繰り返す（続きは BACKFILL_NEXT に記録）。
 
 const BACKFILL_FROM = '2026-09-01';
 const BACKFILL_TO = '2026-10-01';   // この日は含まない
@@ -19,7 +17,6 @@ function backfill(budgetMs) {
   const started = Date.now(), budget = budgetMs || TIME_BUDGET_MS;
   const props = PropertiesService.getScriptProperties();
   const selfAddresses = (props.getProperty('SELF_ADDRESSES') || '').split(',').map((s) => s.trim()).filter(Boolean);
-  const rules = supabase_('GET', 'rules?select=*&enabled=eq.true&order=id.asc') || [];
   let day = props.getProperty('BACKFILL_NEXT') || BACKFILL_FROM, written = 0;
   while (day < BACKFILL_TO && Date.now() - started < budget) {
     const from = jstMidnightMs_(day), to = jstMidnightMs_(nextDay_(day));
@@ -33,7 +30,7 @@ function backfill(budgetMs) {
       if (threads.length < 100) break;
     }
     const known = knownIds_(msgs.map((m) => m.getId()));
-    const rows = msgs.filter((m) => !known.has(m.getId())).map((m) => toRow_(m, rules, selfAddresses));
+    const rows = msgs.filter((m) => !known.has(m.getId())).map((m) => toRow_(m, selfAddresses));
     for (let i = 0; i < rows.length; i += 100) {
       supabase_('POST', 'mails?on_conflict=id', rows.slice(i, i + 100), 'resolution=ignore-duplicates,return=minimal');
     }
@@ -43,22 +40,4 @@ function backfill(budgetMs) {
   }
   Logger.log((day >= BACKFILL_TO ? '完了' : '続きあり（もう一度 backfill を実行）次は ' + day) + '。今回 ' + written + ' 通を記録');
   return { done: day >= BACKFILL_TO, next: day, written };
-}
-
-function planBackfill() {
-  const range = 'received_at=gte.' + new Date(jstMidnightMs_(BACKFILL_FROM)).toISOString() +
-    '&received_at=lt.' + new Date(jstMidnightMs_(BACKFILL_TO)).toISOString();
-  const rows = [];
-  for (let off = 0; ; off += 1000) {
-    const got = supabase_('GET', 'mails?select=id,received_at,category,route,subject,from_name,from_address,excerpt&' +
-      range + '&order=received_at.asc&limit=1000&offset=' + off) || [];
-    rows.push(...got);
-    if (got.length < 1000) break;
-  }
-  const plan = planCalendar(rows);
-  const summary = { from: BACKFILL_FROM, to: BACKFILL_TO, mails: rows.length, totals: plan.totals.length, events: plan.events.length, ai: plan.aiQueue.length };
-  supabase_('POST', 'state?on_conflict=key', [{ key: 'plan', value: Object.assign({ summary }, plan), updated_at: new Date().toISOString() }],
-    'resolution=merge-duplicates,return=minimal');
-  Logger.log('計画を保存しました：' + JSON.stringify(summary));
-  return summary;
 }
