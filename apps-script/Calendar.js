@@ -40,22 +40,34 @@ function purchaseLine_(row) {
 }
 
 function planCalendar(rows) {
-  const days = {}, arrivals = [], aiQueue = [];
+  const days = {}, events = [], aiQueue = [];
+  const addLine = (line) => {
+    const list = days[line.date] = days[line.date] || [];
+    // 同じ取引の重複を外す：カード通知どうし（都度と明細）、カード通知と注文メール（同じ日・同じ金額）
+    const dup = list.some((x) => x.amount === line.amount && (x.shop === line.shop || x.via !== line.via));
+    if (!dup) list.push(line);
+  };
   for (const row of rows) {
     if (row.category === '広告') continue;
     if (row.category === 'カード利用' || row.category === '買い物') {
       const line = purchaseLine_(row);
       if (!line) { aiQueue.push({ id: row.id, why: '金額や日付が本文から取れない', subject: row.subject }); continue; }
-      const list = days[line.date] = days[line.date] || [];
-      // 同じ取引の重複を外す：カード通知どうし（都度と明細）、カード通知と注文メール（同じ日・同じ金額）
-      const dup = list.some((x) => x.amount === line.amount && (x.shop === line.shop || x.via !== line.via));
-      if (!dup) list.push(line);
+      addLine(line);
     } else if (row.category === '到着') {
       const t = row.excerpt || '', d = t.match(ARRIVAL_DATE_RE);
       if (!d) { aiQueue.push({ id: row.id, why: '到着日が本文から取れない', subject: row.subject }); continue; }
       const y = d[1] || jstParts_(row.received_at).date.slice(0, 4), p = (n) => String(n).padStart(2, '0');
       const item = ((t.match(ITEM_RE) || [])[1] || row.subject).trim();
-      arrivals.push({ date: y + '-' + p(d[2]) + '-' + p(d[3]), summary: '[' + (row.from_name || '配送') + '] ' + item + ' 到着予定', colorId: 7 });
+      events.push({ kind: 'arrival', date: y + '-' + p(d[2]) + '-' + p(d[3]), summary: '[' + (row.from_name || '配送') + '] ' + item + ' 到着予定', colorId: 7 });
+    } else if (row.category === '移動・宿泊') {
+      const trip = parseTrip_(row);
+      if (!trip) { aiQueue.push({ id: row.id, why: '便・列車・時刻が本文から取れない（宿泊を含む）', subject: row.subject }); continue; }
+      events.push(...trip.legs);
+      const j = jstParts_(row.received_at);   // 買った日（メールを受け取った日）の支払いとして日次合計へ
+      if (trip.amount) addLine({ date: j.date, time: j.time, shop: trip.shop, amount: trip.amount, via: 'order', item: trip.legs.map((l) => l.summary.replace(/^\[[^\]]+\]\s*/, '')).join(' / ') });
+    } else if (row.category === '自分宛メモ') {
+      const ev = memoEvent_(row);
+      if (ev) events.push(ev); else aiQueue.push({ id: row.id, why: '自分宛メモ（日付が曖昧・返信・日付なし）', subject: row.subject });
     } else if (row.route === 'ai') {
       aiQueue.push({ id: row.id, why: row.category, subject: row.subject });
     }
@@ -69,5 +81,5 @@ function planCalendar(rows) {
     return { date, summary: '[買] ' + yen_(total), colorId: 7, transparency: 'transparent',
       description: m + '/' + d + '（' + w + '）の買い物 合計 ' + yen_(total) + '（' + lines.length + '件）\n\n■ 内訳\n' + body };
   });
-  return { totals, arrivals, aiQueue };
+  return { totals, events, aiQueue };
 }
