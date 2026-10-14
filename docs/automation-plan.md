@@ -2,7 +2,6 @@
 
 構成図：[`docs/design/automation.png`](design/automation.png)（源ファイル [`design/Automation.dc.html`](../design/Automation.dc.html)）
 進み具合の図：[`docs/design/progress.png`](design/progress.png)（源ファイル [`design/Progress.dc.html`](../design/Progress.dc.html)。段階が進んだら作り直す）
-※ 2つの図は「スクリプトがルールで分類する」前の案のままで、下の分担（2026-10-14 改定）には未対応。
 
 **まだ提案の段階で、現在の運用は [`prompts/scheduled-task.md`](../prompts/scheduled-task.md) のまま。** 移行が済んだ部分から、そちらと [`update-procedure.md`](update-procedure.md) を書き換える。
 
