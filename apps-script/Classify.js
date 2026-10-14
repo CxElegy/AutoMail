@@ -11,7 +11,7 @@ const BUILTIN_RULES = [
   { name: '行政', category: '行政', route: 'ai', urgent: true,
     test: (m) => /マイナポータル|マイナンバー|e-Gov|電子申請|ぴったりサービス/i.test(m.subject + ' ' + m.fromName + ' ' + m.fromAddress) },
   { name: 'ログイン・認証', category: 'アカウント・認証', route: 'ai', urgent: false,
-    test: (m) => /ログイン|サインイン|認証コード|確認コード|ワンタイムパスワード|パスワード.*(変更|再設定)|二段階|2段階|新しい(端末|デバイス)|sign[- ]?in|verification code|security alert/i.test(m.subject) },
+    test: (m) => /ログイン|サインイン|認証コード|確認コード|ワンタイムパスワード|パスワード.*(変更|再設定)|二段階|2段階|新しい(端末|デバイス)|セキュリティ(通知|アラート)|sign[- ]?in|verification code|security (alert|notification)/i.test(m.subject) },
   { name: 'カード利用通知', category: 'カード利用', route: 'rule', urgent: false,
     test: (m) => /ご利用のお知らせ|ご利用明細|カードご利用|ご利用代金|利用通知/.test(m.subject) },
   { name: '移動・宿泊', category: '移動・宿泊', route: 'ai', urgent: false,

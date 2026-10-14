@@ -29,6 +29,7 @@ test('金融機関のログイン通知は 金融・セキュリティ で緊急
 });
 
 test('金融以外のログイン通知は アカウント・認証（緊急ではない）', () => {
+  assert.equal(classify(mail({ subject: 'セキュリティ通知' }), [], SELF).category, 'アカウント・認証');
   const c = classify(mail({ subject: '新しいデバイスからのサインイン', fromName: 'Example Game' }), [], SELF);
   assert.equal(c.category, 'アカウント・認証');
   assert.equal(c.urgent, false);
