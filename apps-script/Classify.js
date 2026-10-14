@@ -21,6 +21,9 @@ const BUILTIN_RULES = [
     test: (m) => /お届け|配達完了|配達予定|発送|出荷|お荷物|shipped|delivered|out for delivery/i.test(m.subject) },
   { name: '買い物', category: '買い物', route: 'rule', urgent: false,
     test: (m) => /ご注文|注文(確認|完了|内容)|ご購入|購入完了|決済完了|領収書|お支払い(完了|確認)|order confirm|receipt/i.test(m.subject) },
+  // 広告の文言があっても、期限・手続き・請求に関わる件名は Routine から隠さない（AI に回す）
+  { name: '要確認（件名）', category: '要確認', route: 'ai', urgent: false,
+    test: (m) => /重要|期限|締切|締め切り|手続き|請求|未払|延滞|失効|解約|規約.*変更|料金.*改定/.test(m.subject) },
   { name: '広告（件名）', category: '広告', route: 'rule', urgent: false,
     test: (m) => /セール|キャンペーン|クーポン|ポイント.*(プレゼント|還元|進呈)|メルマガ|ニュースレター|newsletter|% ?off/i.test(m.subject) },
   { name: '広告（List-Unsubscribe）', category: '広告', route: 'rule', urgent: false,

@@ -14,6 +14,7 @@ create table if not exists public.mails (
   excerpt          text,                         -- 本文（プレーンテキスト）の先頭 1,500 字
   list_unsubscribe boolean not null default false, -- List-Unsubscribe ヘッダーか本文の配信停止の案内（広告の手がかり）
   forwarded        boolean not null default false, -- Outlook から「FW:」で転送されたもの（差出人・件名は中の元のもの）
+  skip_label       boolean not null default false, -- automail-skip ラベルを付けた（Routine が読まない）
   category         text not null,                -- ルールで決めた分類（自分宛メモ / 行政 / 金融・セキュリティ / …）
   route            text not null check (route in ('rule', 'ai')),  -- rule = スクリプトで処理できる、ai = AI の判断が要る
   urgent           boolean not null default false,

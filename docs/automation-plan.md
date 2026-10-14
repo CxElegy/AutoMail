@@ -26,7 +26,9 @@ GitHub Actions ではなく Apps Script を選ぶ理由：
 ## 移行の順番（各段階で今の Routine と並走させて結果を比べる）
 
 1. **取得と記録だけ**（コード・DB は用意済み。設定手順は [`apps-script/README.md`](../apps-script/README.md)）：Apps Script が新着を取得し、ルールで分類して `mails` に書く。Routine は今のまま動かし、分類結果を突き合わせる。
-2. **機械処理を移す**：広告・カード通知・注文・配送をスクリプト側で処理する。Routine の prompt から該当部分を外す。
+2. **機械処理を移す**：
+   - 2a（コード用意済み）：広告に Gmail ラベル `automail-skip` を付け、Routine は `-label:automail-skip` で検索して読まない。Routine は Supabase を読めないので、受け渡しは Gmail ラベルで行う。
+   - 2b：カード通知・注文・配送の日次合計と予定登録をスクリプトへ移す。今は Routine が日次合計を書いているので、同じ予定を両方が書かないよう、2b に切り替えるときに Routine の担当から外す。
 3. **緊急通知と週まとめ**：Discord（Wishlist と同じ Webhook 方式）に切り替える。
 4. **ボードを Web アプリへ**：Artifact の週次 publish をやめる。
 5. **Routine をキュー起動に**：cron をやめ、`ai_queue` が1件以上のときだけ Apps Script から API で起動する。`RULES.md` を新設し、手順書の全文は読ませない。

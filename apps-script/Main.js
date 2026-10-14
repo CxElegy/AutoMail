@@ -1,5 +1,5 @@
-// 段階1：Gmail の新着を取得し、ルールで分類して Supabase の mails に記録する。
-// Gmail は読むだけ（ラベルも付けない）。今の Routine と並走させて、結果を突き合わせるための段階。
+// Gmail の新着を取得し、ルールで分類して Supabase の mails に記録する（段階1）。
+// 広告には automail-skip ラベルを付け、Routine が読まずに済むようにする（段階2・Label.js）。
 //
 // スクリプトプロパティ（プロジェクトの設定 → スクリプト プロパティ）：
 //   SUPABASE_URL         … https://<ref>.supabase.co
@@ -45,6 +45,7 @@ function run() {
     fresh.sort((a, b) => a.getDate().getTime() - b.getDate().getTime());
     const batch = fresh.slice(0, MAX_PER_RUN);
     const rows = batch.map((msg) => toRow_(msg, rules, selfAddresses));
+    labelSkippable_(batch, rows);  // 広告に automail-skip ラベル（DB に書く前に付けて、skip_label も記録する）
     for (let i = 0; i < rows.length; i += 100) {
       supabase_('POST', 'mails?on_conflict=id', rows.slice(i, i + 100), 'resolution=ignore-duplicates,return=minimal');
     }

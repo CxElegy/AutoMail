@@ -9,23 +9,27 @@ function fakeMsg(id, ms, subject, from) {
   return {
     getId: () => id, getDate: () => new Date(ms), getSubject: () => subject, getFrom: () => from || 'Shop <shop@example.com>',
     getTo: () => 'me@example.com, other@example.com', getPlainBody: () => '合計 1,200円', getHeader: () => '',
-    getThread: () => ({ getId: () => 't-' + id }),
+    getThread: () => ({ getId: () => 't-' + id, getMessageCount: () => 1 }),
   };
 }
 
 function env({ now, cursor, messages, db = new Set() }) {
   const props = { SUPABASE_URL: 'https://x.supabase.co', SUPABASE_SECRET_KEY: 'sb_secret_dummy', CURSOR_MS: String(cursor) };
   const calls = [];
+  const labelCalls = [];
   const RealDate = Date;
   class FakeDate extends RealDate { constructor(...a) { super(...(a.length ? a : [now])); } static now() { return now; } }
   return {
-    calls, props, db,
+    calls, props, db, labelCalls,
     Date: FakeDate,
     PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => props[k] ?? null, setProperty: (k, v) => { props[k] = v; } }) },
     LockService: { getScriptLock: () => ({ tryLock: () => true, releaseLock: () => {} }) },
     Logger: { log: () => {} },
     Utilities: { formatDate: (d) => d.toISOString() },
+    labeled: [],
     GmailApp: {
+      getUserLabelByName: () => null,
+      createLabel: (name) => ({ addToThreads: (ths) => { labelCalls.push({ name, n: ths.length }); } }),
       search: (q, start, max) => {
         const after = Number(q.replace('after:', '')) * 1000;
         const hit = messages.filter((m) => m.getDate().getTime() > after);
@@ -60,6 +64,9 @@ test('新着を古い順に記録し、前回の続きを最後の1通まで進�
   assert.equal(post.body[0].to_address, 'me@example.com');
   assert.equal(post.headers.Authorization, undefined);  // sb_secret_ は apikey だけ
   assert.equal(e.props.CURSOR_MS, String(now - 1 * H));
+  // 広告（セール）だけに automail-skip ラベル
+  assert.deepEqual(e.labelCalls, [{ name: 'automail-skip', n: 1 }]);
+  assert.deepEqual(post.body.map((r) => !!r.skip_label), [true, false]);
   const run = e.calls.find((c) => c.path === 'runs').body[0];
   assert.equal(run.written, 2);
   assert.equal(run.remaining, false);

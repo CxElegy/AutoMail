@@ -129,3 +129,9 @@ test('転送されたメールは元の差出人で分類し、自分のアド�
 test('本文からリンク先・画像の URL を除く', () => {
   assert.equal(compactBody('文字[https://img.example/a.png]<https://x.example/b>\n\n\n\n次'), '文字\n\n次');
 });
+
+test('期限・手続き・請求の件名は広告の文言があっても AI に回す', () => {
+  const c = classify(mail({ subject: '【重要】お支払い方法の変更手続きのお願い', listUnsubscribe: true }), [], SELF);
+  assert.equal(c.category, '要確認');
+  assert.equal(c.route, 'ai');
+});
