@@ -4,7 +4,7 @@
 // 取れなければ空の配列（AI に回す）。
 
 const CARD_DATE_RE = /(?:ご利用日時|ご利用日|利用日)\s*[:：]\s*(\d{4})[\/年](\d{1,2})[\/月](\d{1,2})日?(?:\s*(\d{1,2}):(\d{2}))?/;
-const CARD_LINE_RE = /^\s*(.+?)（(買物|返品|取消|[^）]{1,8})）\s+(-?[0-9,]+(?:\.\d+)?)\s*([A-Z]{3})\s*$/mg;
+const CARD_LINE_RE = /^\s*(.+?)（(買物|返品|取消|[^）]{1,8})）\s+(-?[0-9,]+(?:\.\d+)?)\s*([A-Z]{3}|円)\s*$/mg;
 const CARD_OLD_RE = { shop: /(?:ご利用先|利用先|ご利用店名?)\s*[:：]\s*(.+)/, amount: /(?:ご利用金額|利用金額)\s*[:：]\s*[¥￥]?\s*(-?[0-9,]+)\s*円?/ };
 const ORDER_AMOUNT_RE = /(?:ご請求額|注文合計|お支払い総額[＞>]?|お支払い金額|合計金額|領収額は、合計|^\s*合計)\s*[:：]?\s*[¥￥]?\s*([0-9,]+)\s*円?/m;
 const ITEM_RE = /(?:商品名|ご注文商品)\s*[:：]\s*(.+)|^\s*\[([^\]\n]{4,80})\]\s*$/m;
@@ -20,8 +20,8 @@ function purchaseLines_(row) {
     const date = d[1] + '-' + pad_(d[2]) + '-' + pad_(d[3]), time = d[4] ? pad_(d[4]) + ':' + d[5] : '';
     const out = [];
     for (const m of t.matchAll(CARD_LINE_RE)) {
-      const sign = /返品|取消/.test(m[2]) ? -1 : 1, val = parseFloat(m[3].replace(/,/g, '')) * sign;
-      out.push(m[4] === 'JPY' ? { date, time, shop: m[1].trim(), amount: Math.round(val), via: 'card' }
+      const sign = /返品|取消/.test(m[2]) ? -1 : 1, val = Math.abs(parseFloat(m[3].replace(/,/g, ''))) * sign;  // 返品の行は「-13,870円」と負号つきで来る
+      out.push(m[4] === 'JPY' || m[4] === '円' ? { date, time, shop: m[1].trim(), amount: Math.round(val), via: 'card' }
         : { date, time, shop: m[1].trim(), amount: 0, fx: { cur: m[4], val }, via: 'card' });
     }
     if (!out.length) {   // 古い形式（ご利用先：／ご利用金額：）

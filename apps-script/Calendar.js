@@ -57,7 +57,10 @@ function planCalendar(rows) {
     }
   }
   const totals = Object.keys(days).sort().map((date) => {
-    const lines = days[date].sort((a, b) => a.time.localeCompare(b.time));
+    // 「UBER * EATS PENDING」のような仮の承認は、同じ日に同じ店の確定分があれば数えない
+    const shopKey = (l) => l.shop.normalize('NFKC').toUpperCase().split(/[\s*＊／]+/)[0];
+    const lines = days[date].filter((l) => !/PENDING/i.test(l.shop) || !days[date].some((o) => o !== l && !/PENDING/i.test(o.shop) && shopKey(o) === shopKey(l)))
+      .sort((a, b) => a.time.localeCompare(b.time));
     const total = lines.reduce((s, l) => s + l.amount, 0), fx = {};
     lines.filter((l) => l.fx).forEach((l) => { fx[l.fx.cur] = (fx[l.fx.cur] || 0) + l.fx.val; });
     const fxText = Object.keys(fx).map((c) => '+' + (c === 'USD' ? '$' : c + ' ') + fx[c].toFixed(2).replace(/\.00$/, '')).join('');
