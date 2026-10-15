@@ -46,6 +46,7 @@ function toRow_(msg, selfAddresses) {
     excerpt: body.slice(0, EXCERPT_CHARS),
     list_unsubscribe: !!msg.getHeader('List-Unsubscribe'),
     forwarded: !!fw,
-    self_sent: !fw && selfAddresses.indexOf(outer.address) >= 0,
+    // Outlook で自分宛に書いたメモは転送ルールで届くので、転送の中の元の差出人も見る
+    self_sent: selfAddresses.indexOf(fw ? fw.fromAddress : outer.address) >= 0,
   };
 }
