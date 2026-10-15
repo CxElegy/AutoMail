@@ -6,6 +6,10 @@ Gmail に届くメールから「期限」「受け取り」「移動・宿泊�
 
 > **注意：このリポジトリは public です。** メールアドレス・注文番号・予約番号・人名・Drive のファイル ID などの個人情報は書かないでください。実際の値は `config/config.example.md` を参考に、リポジトリの外（Scheduled task の prompt や Drive 上の台帳）で管理します。
 
+![構成図：スクリプトは集めるだけ、判断はすべて AI（Haiku → Sonnet）](docs/design/automation.png)
+
+移行中の新しい構成（2026-10-14 改定）。計画は [`docs/automation-plan.md`](docs/automation-plan.md)。
+
 ## 全体像（どこに何があるか）
 
 | 場所 | 役割 |
@@ -31,7 +35,8 @@ Gmail に届くメールから「期限」「受け取り」「移動・宿泊�
 .
 ├── README.md                    # このファイル（システム概要）
 ├── CLAUDE.md                    # このリポジトリで作業する Claude 向けの指示
-├── apps-script/                 # 省トークン自動化のスクリプト（段階1：取得→分類→Supabase）。設定手順は中の README
+├── apps-script/                 # 省トークン自動化のスクリプト（Gmail を集めて Supabase に記録するだけ。判断は AI）。設定手順は中の README
+├── archive/rules-v0/            # 使わなくなった「ルールで分類・読み取り」のコード（記録用）
 ├── db/
 │   └── automail.sql             # Supabase のテーブル定義
 ├── design/
@@ -44,14 +49,15 @@ Gmail に届くメールから「期限」「受け取り」「移動・宿泊�
 │   └── update-procedure.md      # 詳細ルール（「00_更新手順」＋「00a」7〜9節の写し）
 ├── prompts/
 │   └── scheduled-task.md        # Scheduled task の prompt 雛形・軽量／省トークン運転ルール（「00a」1〜6節）
-├── tests/                       # 分類ルールと run() のテスト（ダミーデータのみ。node --test tests/*.test.js）
+├── tests/                       # run()・backfill() のテスト（ダミーデータのみ。node --test tests/*.test.js）
+├── tools/gas-push.mjs           # Apps Script API でコードを反映する（任意）
 └── config/
     └── config.example.md        # 実運用で使う ID・アドレスの置き場所（値は書かない）
 ```
 
 ## 今後の予定
 
-- [ ] 省トークン自動化への移行（スクリプトが集めて AI は判断だけ）：[`docs/automation-plan.md`](docs/automation-plan.md)、構成図 [`docs/design/automation.png`](docs/design/automation.png)。台帳とメールDBの Supabase 移行もここに含む
+- [ ] 省トークン自動化への移行（スクリプトは集めるだけ、判断は AI が Haiku → Sonnet の2段で）：[`docs/automation-plan.md`](docs/automation-plan.md)、構成図 [`docs/design/automation.png`](docs/design/automation.png)。台帳とメールDBの Supabase 移行もここに含む
 - [ ] 1日の流れ（タイムライン）の図を作る
 
 ## 変更履歴
@@ -67,3 +73,5 @@ Gmail に届くメールから「期限」「受け取り」「移動・宿泊�
 - **2026-09-27**：ponytail（YAGNI・重複排除）の観点で整理。ボードの未使用CSS/JSを削除し、絞り込みの説明文が出ない不具合（未定義変数 `adN`）を修正。README とルール文書の重複記述を削り、正本を1か所に。
 - **2026-10-12**：Drive 版の手順書（00・00a）に同期。起動を1日2回（8:51／20:51）に、ボード更新を週1回＋緊急時に変更したことを反映。買い物の日次合計・カレンダー件名の `[ ]` 形式・金融機関／行政事案の緊急扱いを追記。構成図（`design/`）を追加。
 - **2026-10-14**：省トークン自動化の段階1（Apps Script で Gmail を取得・分類して Supabase に記録）を追加。DB は Wishlist と別の Supabase プロジェクト、通知は Discord、カレンダーはスマホで直接同期と決定。
+- **2026-10-14（改定）**：スクリプトはルールで判断しない方針に変更。Apps Script は取得・整形・記録だけにし、分類・金額・予定の読み取りは AI（安いモデル → 判断が要るものだけ上位モデル）に任せる。広告ラベル `automail-skip` は廃止。
+- **2026-10-15**：9月分で新しい2段方式を試験。漏れの点検（2段目）、自分宛メモの `self_sent` 判定の修正、メモの不足を質問で返す、カードでのチャージを支出に、ポイント失効 1,000 以上を重点に、セキュリティは月1回の一覧に。
