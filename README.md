@@ -6,6 +6,10 @@ Gmail に届くメールから「期限」「受け取り」「移動・宿泊�
 
 > **注意：このリポジトリは public です。** メールアドレス・注文番号・予約番号・人名・Drive のファイル ID などの個人情報は書かないでください。実際の値は `config/config.example.md` を参考に、リポジトリの外（Scheduled task の prompt や Drive 上の台帳）で管理します。
 
+![構成図：スクリプトは集めるだけ、判断はすべて AI（Haiku → Sonnet）](docs/design/automation.png)
+
+移行中の新しい構成（2026-10-14 改定）。計画は [`docs/automation-plan.md`](docs/automation-plan.md)。
+
 ## 全体像（どこに何があるか）
 
 | 場所 | 役割 |
